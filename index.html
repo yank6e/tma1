@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍕 Доставка еды | Telegram Mini App</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🍔 Меню</h1>
+        
+        <div class="menu">
+            <!-- Бургер -->
+            <div class="food-item">
+                <img src="https://via.placeholder.com/150" alt="Бургер">
+                <h3>Бургер</h3>
+                <p>Сочная котлета с овощами</p>
+                <p class="price">250 ₽</p>
+                <button onclick="addToCart(1, 'Бургер', 250)">В корзину</button>
+            </div>
+            
+            <!-- Пицца -->
+            <div class="food-item">
+                <img src="https://via.placeholder.com/150" alt="Пицца">
+                <h3>Пицца</h3>
+                <p>Итальянская с моцареллой</p>
+                <p class="price">350 ₽</p>
+                <button onclick="addToCart(2, 'Пицца', 350)">В корзину</button>
+            </div>
+            
+            <!-- Суши -->
+            <div class="food-item">
+                <img src="https://via.placeholder.com/150" alt="Суши">
+                <h3>Суши</h3>
+                <p>Филадельфия с лососем</p>
+                <p class="price">400 ₽</p>
+                <button onclick="addToCart(3, 'Суши', 400)">В корзину</button>
+            </div>
+        </div>
+        
+        <!-- Кнопка корзины -->
+        <div class="cart-button" onclick="openCart()">
+            🛒 Корзина (<span id="cart-count">0</span>)
+        </div>
+    </div>
+</body>
+</html>
