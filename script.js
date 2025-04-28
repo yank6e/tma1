@@ -1,9 +1,12 @@
 // Инициализация Telegram WebApp
 const tg = window.Telegram.WebApp;
 
-// Загрузка корзины и истории заказов из LocalStorage
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
-let orderHistory = JSON.parse(localStorage.getItem('orderHistory')) || [];
+// Получение ID пользователя из Telegram
+const userId = tg.initDataUnsafe?.user?.id || 'guest';
+
+// Загрузка корзины и истории заказов из LocalStorage для конкретного пользователя
+let cart = JSON.parse(localStorage.getItem(`cart_${userId}`)) || [];
+let orderHistory = JSON.parse(localStorage.getItem(`orderHistory_${userId}`)) || [];
 
 // Обновляем счетчик корзины при загрузке
 updateCartCount();
@@ -21,7 +24,7 @@ function addToCart(id, name, price) {
         cart.push({ id, name, price, quantity: 1 });
     }
     
-    localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem(`cart_${userId}`, JSON.stringify(cart));
     updateCartCount();
     tg.showAlert(`Добавлено: ${name}`);
 }
@@ -29,7 +32,7 @@ function addToCart(id, name, price) {
 // Удаление товара из корзины
 function removeFromCart(id) {
     cart = cart.filter(item => item.id !== id);
-    localStorage.setItem('cart', JSON.stringify(cart));
+    localStorage.setItem(`cart_${userId}`, JSON.stringify(cart));
     updateCartCount();
     displayCart();
 }
@@ -42,7 +45,7 @@ function updateQuantity(id, change) {
         if (item.quantity <= 0) {
             removeFromCart(id);
         } else {
-            localStorage.setItem('cart', JSON.stringify(cart));
+            localStorage.setItem(`cart_${userId}`, JSON.stringify(cart));
             updateCartCount();
             displayCart();
         }
@@ -54,7 +57,10 @@ function displayCart() {
     const cartItemsDiv = document.getElementById('cart-items');
     const cartTotalDiv = document.getElementById('cart-total');
     
-    if (!cartItemsDiv || !cartTotalDiv) return;
+    if (!cartItemsDiv || !cartTotalDiv) {
+        console.error('Cart elements not found');
+        return;
+    }
     
     if (cart.length === 0) {
         cartItemsDiv.innerHTML = '<p>Корзина пуста</p>';
@@ -64,20 +70,26 @@ function displayCart() {
     
     let total = 0;
     cartItemsDiv.innerHTML = cart.map(item => {
+        if (!item || typeof item.price !== 'number' || typeof item.quantity !== 'number') {
+            console.warn('Invalid cart item:', item);
+            return '';
+        }
         const itemTotal = item.price * item.quantity;
         total += itemTotal;
+        // Экранируем item.id для безопасного использования в HTML
+        const safeId = encodeURIComponent(item.id);
         return `
             <div class="cart-item">
                 <span>${item.name} × ${item.quantity}</span>
                 <span>${itemTotal} ₽</span>
                 <div>
-                    <button onclick="updateQuantity(${item.id}, -1)">-</button>
-                    <button onclick="updateQuantity(${item.id}, 1)">+</button>
-                    <button onclick="removeFromCart(${item.id})">Удалить</button>
+                    <button onclick="updateQuantity('${safeId}', -1)">-</button>
+                    <button onclick="updateQuantity('${safeId}', 1)">+</button>
+                    <button onclick="removeFromCart('${safeId}')">Удалить</button>
                 </div>
             </div>
         `;
-    }).join('');
+    }).filter(Boolean).join('');
     
     cartTotalDiv.innerHTML = `<div class="total">Итого: ${total} ₽</div>`;
 }
@@ -113,14 +125,14 @@ function submitOrder() {
     
     // Сохраняем заказ в историю
     orderHistory.push(order);
-    localStorage.setItem('orderHistory', JSON.stringify(orderHistory));
+    localStorage.setItem(`orderHistory_${userId}`, JSON.stringify(orderHistory));
     
     // Отправляем данные в Telegram бота
     tg.sendData(JSON.stringify(order));
     
     // Очищаем корзину
     cart = [];
-    localStorage.removeItem('cart');
+    localStorage.setItem(`cart_${userId}`, JSON.stringify(cart));
     updateCartCount();
     displayCart();
     
@@ -130,29 +142,50 @@ function submitOrder() {
 
 // Отображение истории заказов
 function showOrderHistory() {
-    if (orderHistory.length === 0) {
-        tg.showAlert('История заказов пуста!');
+    const orderHistoryDiv = document.getElementById('order-history');
+    const orderHistoryItemsDiv = document.getElementById('order-history-items');
+    
+    if (!orderHistoryDiv || !orderHistoryItemsDiv) {
+        console.error('Order history elements not found');
         return;
     }
     
-    let message = '📜 История заказов:\n\n';
-    orderHistory.forEach(order => {
-        message += `Заказ #${order.id} от ${order.date}\n`;
-        order.items.forEach(item => {
-            message += `${item.name} × ${item.quantity} = ${item.price * item.quantity} ₽\n`;
-        });
-        message += `Итого: ${order.total} ₽\n`;
-        message += `Доставка: ${order.firstName} ${order.lastName}, ${order.address}\n`;
-        if (order.comment) message += `Комментарий: ${order.comment}\n`;
-        message += '------------------------\n';
-    });
+    if (orderHistory.length === 0) {
+        orderHistoryItemsDiv.innerHTML = '<p>История заказов пуста</p>';
+        orderHistoryDiv.style.display = 'block';
+        return;
+    }
     
-    tg.showAlert(message);
+    orderHistoryItemsDiv.innerHTML = orderHistory.map(order => {
+        let itemsHtml = order.items.map(item => `
+            <p>${item.name} × ${item.quantity} = ${item.price * item.quantity} ₽</p>
+        `).join('');
+        
+        return `
+            <div class="order-history-item">
+                <h3>Заказ #${order.id} от ${order.date}</h3>
+                ${itemsHtml}
+                <p><strong>Итого:</strong> ${order.total} ₽</p>
+                <p><strong>Доставка:</strong> ${order.firstName} ${order.lastName}, ${order.address}</p>
+                ${order.comment ? `<p><strong>Комментарий:</strong> ${order.comment}</p>` : ''}
+            </div>
+        `;
+    }).join('');
+    
+    orderHistoryDiv.style.display = 'block';
+}
+
+// Скрытие истории заказов
+function hideOrderHistory() {
+    const orderHistoryDiv = document.getElementById('order-history');
+    if (orderHistoryDiv) {
+        orderHistoryDiv.style.display = 'none';
+    }
 }
 
 // Обновление счетчика корзины
 function updateCartCount() {
-    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
     const cartCount = document.getElementById('cart-count');
     if (cartCount) cartCount.textContent = totalItems;
 }
