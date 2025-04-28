@@ -67,21 +67,14 @@
                 <button onclick="addToCart(6, 'Кола', 100)">В корзину</button>
             </div>
         </div>
-        
-        <!-- История заказов -->
-        <div id="order-history" class="order-history" style="display: none;">
-            <h2>📜 История заказов</h2>
-            <div id="order-history-items"></div>
-            <button onclick="hideOrderHistory()">Закрыть</button>
-        </div>
-        
-        <!-- Кнопки -->
-        <div class="cart-button" onclick="window.location.href='cart.html'">
-            🛒 Корзина (<span id="cart-count">0</span>)
-        </div>
-        <div class="history-button" onclick="showOrderHistory()">
-            📜 История заказов
-        </div>
+    </div>
+
+    <!-- Навигация -->
+    <div class="nav-bar">
+        <a href="index.html" class="nav-item active">🍔 Меню</a>
+        <a href="cart.html" class="nav-item">🛒 Корзина (<span id="cart-count">0</span>)</a>
+        <a href="history.html" class="nav-item">📜 История</a>
+        <a href="profile.html" class="nav-item">👤 Профиль</a>
     </div>
 </body>
 </html>

@@ -20,12 +20,15 @@
             <input type="text" id="lastName" placeholder="Фамилия" required>
             <input type="text" id="address" placeholder="Адрес доставки" required>
             <textarea id="comment" placeholder="Комментарий к заказу"></textarea>
-            <button onclick="submitOrder()">Оформить заказ</button>
         </div>
-        
-        <div class="back-button" onclick="window.location.href='index.html'">
-            ← Назад к меню
-        </div>
+    </div>
+
+    <!-- Навигация -->
+    <div class="nav-bar">
+        <a href="index.html" class="nav-item">🍔 Меню</a>
+        <a href="cart.html" class="nav-item active">🛒 Корзина (<span id="cart-count">0</span>)</a>
+        <a href="history.html" class="nav-item">📜 История</a>
+        <a href="profile.html" class="nav-item">👤 Профиль</a>
     </div>
 </body>
 </html>

@@ -9,6 +9,7 @@ body {
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
+    padding-bottom: 80px; /* Space for nav bar */
 }
 
 h1, h2 {
@@ -56,36 +57,6 @@ button:hover {
     background: #d35400;
 }
 
-.cart-button, .history-button, .back-button {
-    position: fixed;
-    bottom: 20px;
-    background: #2ecc71;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 50px;
-    cursor: pointer;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.cart-button {
-    right: 20px;
-}
-
-.history-button {
-    right: 150px;
-}
-
-.back-button {
-    left: 20px;
-}
-
-.cart-button:hover, .history-button:hover, .back-button:hover {
-    background: #27ae60;
-}
-
 .cart-item {
     display: flex;
     justify-content: space-between;
@@ -108,14 +79,14 @@ button:hover {
     margin: 20px 0;
 }
 
-.delivery-form {
+.delivery-form, .profile-form {
     display: flex;
     flex-direction: column;
     gap: 10px;
     margin: 20px 0;
 }
 
-.delivery-form input, .delivery-form textarea {
+.delivery-form input, .delivery-form textarea, .profile-form input {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -137,4 +108,27 @@ button:hover {
     margin: 10px 0;
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.nav-bar {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background: #fff;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.nav-item {
+    text-align: center;
+    color: #333;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.nav-item.active {
+    color: #e67e22;
+    font-weight: bold;
 }

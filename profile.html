@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>👤 Профиль</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <h1>👤 Профиль</h1>
+        <div class="profile-form">
+            <input type="text" id="profileFirstName" placeholder="Имя">
+            <input type="text" id="profileLastName" placeholder="Фамилия">
+            <button onclick="saveProfile()">Сохранить</button>
+        </div>
+    </div>
+
+    <!-- Навигация -->
+    <div class="nav-bar">
+        <a href="index.html" class="nav-item">🍔 Меню</a>
+        <a href="cart.html" class="nav-item">🛒 Корзина (<span id="cart-count">0</span>)</a>
+        <a href="history.html" class="nav-item">📜 История</a>
+        <a href="profile.html" class="nav-item active">👤 Профиль</a>
+    </div>
+</body>
+</html>

@@ -4,14 +4,20 @@ const tg = window.Telegram.WebApp;
 // Получение ID пользователя из Telegram
 const userId = tg.initDataUnsafe?.user?.id || 'guest';
 
-// Загрузка корзины и истории заказов из LocalStorage для конкретного пользователя
+// Загрузка данных из LocalStorage
 let cart = JSON.parse(localStorage.getItem(`cart_${userId}`)) || [];
 let orderHistory = JSON.parse(localStorage.getItem(`orderHistory_${userId}`)) || [];
+let profile = JSON.parse(localStorage.getItem(`profile_${userId}`)) || { firstName: '', lastName: '' };
 
-// Обновляем счетчик корзины при загрузке
+// Обновляем счетчик корзины и инициализируем страницы
 updateCartCount();
 if (window.location.pathname.includes('cart.html')) {
     displayCart();
+    loadDeliveryForm();
+} else if (window.location.pathname.includes('history.html')) {
+    displayOrderHistory();
+} else if (window.location.pathname.includes('profile.html')) {
+    loadProfileForm();
 }
 
 // Добавление товара в корзину
@@ -65,6 +71,7 @@ function displayCart() {
     if (cart.length === 0) {
         cartItemsDiv.innerHTML = '<p>Корзина пуста</p>';
         cartTotalDiv.innerHTML = '';
+        tg.MainButton.hide();
         return;
     }
     
@@ -76,7 +83,6 @@ function displayCart() {
         }
         const itemTotal = item.price * item.quantity;
         total += itemTotal;
-        // Экранируем item.id для безопасного использования в HTML
         const safeId = encodeURIComponent(item.id);
         return `
             <div class="cart-item">
@@ -92,6 +98,40 @@ function displayCart() {
     }).filter(Boolean).join('');
     
     cartTotalDiv.innerHTML = `<div class="total">Итого: ${total} ₽</div>`;
+    
+    // Показываем кнопку оплаты
+    tg.MainButton.setText(`Оплатить ${total} ₽`);
+    tg.MainButton.show();
+    tg.MainButton.onClick(() => initiatePayment(total));
+}
+
+// Загрузка данных в форму доставки
+function loadDeliveryForm() {
+    const firstNameInput = document.getElementById('firstName');
+    const lastNameInput = document.getElementById('lastName');
+    
+    if (firstNameInput && lastNameInput && profile) {
+        firstNameInput.value = profile.firstName || '';
+        lastNameInput.value = profile.lastName || '';
+    }
+}
+
+// Инициация тестовой оплаты
+function initiatePayment(total) {
+    const payload = JSON.stringify({
+        orderId: Date.now(),
+        amount: total,
+        currency: 'RUB',
+        description: 'Оплата заказа в Доставке еды'
+    });
+
+    // Симуляция запроса на оплату (без реального провайдера)
+    tg.showConfirm(`Тестовая оплата на сумму ${total} ₽. Подтвердить?`, (confirmed) => {
+        if (confirmed) {
+            submitOrder();
+            tg.showAlert('✅ Тестовая оплата прошла успешно!');
+        }
+    });
 }
 
 // Оформление заказа
@@ -127,6 +167,11 @@ function submitOrder() {
     orderHistory.push(order);
     localStorage.setItem(`orderHistory_${userId}`, JSON.stringify(orderHistory));
     
+    // Сохраняем имя и фамилию в профиль
+    profile.firstName = firstName;
+    profile.lastName = lastName;
+    localStorage.setItem(`profile_${userId}`, JSON.stringify(profile));
+    
     // Отправляем данные в Telegram бота
     tg.sendData(JSON.stringify(order));
     
@@ -136,23 +181,22 @@ function submitOrder() {
     updateCartCount();
     displayCart();
     
+    tg.MainButton.hide();
     tg.showAlert('✅ Заказ отправлен! Ожидайте доставку.');
     window.location.href = 'index.html';
 }
 
 // Отображение истории заказов
-function showOrderHistory() {
-    const orderHistoryDiv = document.getElementById('order-history');
+function displayOrderHistory() {
     const orderHistoryItemsDiv = document.getElementById('order-history-items');
     
-    if (!orderHistoryDiv || !orderHistoryItemsDiv) {
+    if (!orderHistoryItemsDiv) {
         console.error('Order history elements not found');
         return;
     }
     
     if (orderHistory.length === 0) {
         orderHistoryItemsDiv.innerHTML = '<p>История заказов пуста</p>';
-        orderHistoryDiv.style.display = 'block';
         return;
     }
     
@@ -171,21 +215,41 @@ function showOrderHistory() {
             </div>
         `;
     }).join('');
-    
-    orderHistoryDiv.style.display = 'block';
 }
 
-// Скрытие истории заказов
-function hideOrderHistory() {
-    const orderHistoryDiv = document.getElementById('order-history');
-    if (orderHistoryDiv) {
-        orderHistoryDiv.style.display = 'none';
+// Загрузка данных профиля
+function loadProfileForm() {
+    const firstNameInput = document.getElementById('profileFirstName');
+    const lastNameInput = document.getElementById('profileLastName');
+    
+    if (firstNameInput && lastNameInput && profile) {
+        firstNameInput.value = profile.firstName || '';
+        lastNameInput.value = profile.lastName || '';
     }
+}
+
+// Сохранение профиля
+function saveProfile() {
+    const firstName = document.getElementById('profileFirstName')?.value.trim();
+    const lastName = document.getElementById('profileLastName')?.value.trim();
+    
+    if (!firstName || !lastName) {
+        tg.showAlert('Пожалуйста, заполните имя и фамилию!');
+        return;
+    }
+    
+    profile.firstName = firstName;
+    profile.lastName = lastName;
+    localStorage.setItem(`profile_${userId}`, JSON.stringify(profile));
+    
+    tg.showAlert('✅ Профиль сохранен!');
 }
 
 // Обновление счетчика корзины
 function updateCartCount() {
     const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
-    const cartCount = document.getElementById('cart-count');
-    if (cartCount) cartCount.textContent = totalItems;
+    const cartCounts = document.querySelectorAll('#cart-count');
+    cartCounts.forEach(cartCount => {
+        if (cartCount) cartCount.textContent = totalItems;
+    });
 }
