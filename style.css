@@ -9,7 +9,7 @@ body {
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
-    padding-bottom: 80px; /* Space for nav bar */
+    padding-bottom: 80px;
 }
 
 h1, h2 {
@@ -55,6 +55,11 @@ button {
 
 button:hover {
     background: #d35400;
+}
+
+button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
 }
 
 .cart-item {
@@ -131,4 +136,16 @@ button:hover {
 .nav-item.active {
     color: #e67e22;
     font-weight: bold;
+}
+
+#card-element {
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+#card-errors {
+    color: red;
+    margin-bottom: 10px;
 }

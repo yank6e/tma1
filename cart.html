@@ -6,6 +6,7 @@
     <title>🛒 Корзина</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
     <script src="script.js" defer></script>
 </head>
 <body>
@@ -20,7 +21,10 @@
             <input type="text" id="lastName" placeholder="Фамилия" required>
             <input type="text" id="address" placeholder="Адрес доставки" required>
             <textarea id="comment" placeholder="Комментарий к заказу"></textarea>
+            <button id="pay-button" disabled>Оплатить</button>
         </div>
+        <div id="card-element"></div>
+        <div id="card-errors" role="alert"></div>
     </div>
 
     <!-- Навигация -->

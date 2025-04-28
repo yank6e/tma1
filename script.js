@@ -4,6 +4,11 @@ const tg = window.Telegram.WebApp;
 // Получение ID пользователя из Telegram
 const userId = tg.initDataUnsafe?.user?.id || 'guest';
 
+// Инициализация Stripe с предоставленным тестовым публичным ключом
+const stripe = Stripe('pk_test_51RItahIO2PGRyYd42idSYTYMxXK1gwBQrVqXpEEiZO2OyURzv2KvnxGz4WUuTloizejwpoSBqIfOKOS4GsVMdzRe009MlVeuRa');
+const elements = stripe.elements();
+let cardElement;
+
 // Загрузка данных из LocalStorage
 let cart = JSON.parse(localStorage.getItem(`cart_${userId}`)) || [];
 let orderHistory = JSON.parse(localStorage.getItem(`orderHistory_${userId}`)) || [];
@@ -14,10 +19,31 @@ updateCartCount();
 if (window.location.pathname.includes('cart.html')) {
     displayCart();
     loadDeliveryForm();
+    setupStripe();
 } else if (window.location.pathname.includes('history.html')) {
     displayOrderHistory();
 } else if (window.location.pathname.includes('profile.html')) {
     loadProfileForm();
+}
+
+// Настройка Stripe Card Element
+function setupStripe() {
+    cardElement = elements.create('card');
+    cardElement.mount('#card-element');
+    
+    cardElement.on('change', (event) => {
+        const displayError = document.getElementById('card-errors');
+        if (event.error) {
+            displayError.textContent = event.error.message;
+        } else {
+            displayError.textContent = '';
+        }
+    });
+
+    const payButton = document.getElementById('pay-button');
+    if (payButton) {
+        payButton.addEventListener('click', initiatePayment);
+    }
 }
 
 // Добавление товара в корзину
@@ -62,8 +88,9 @@ function updateQuantity(id, change) {
 function displayCart() {
     const cartItemsDiv = document.getElementById('cart-items');
     const cartTotalDiv = document.getElementById('cart-total');
+    const payButton = document.getElementById('pay-button');
     
-    if (!cartItemsDiv || !cartTotalDiv) {
+    if (!cartItemsDiv || !cartTotalDiv || !payButton) {
         console.error('Cart elements not found');
         return;
     }
@@ -71,7 +98,7 @@ function displayCart() {
     if (cart.length === 0) {
         cartItemsDiv.innerHTML = '<p>Корзина пуста</p>';
         cartTotalDiv.innerHTML = '';
-        tg.MainButton.hide();
+        payButton.disabled = true;
         return;
     }
     
@@ -98,11 +125,55 @@ function displayCart() {
     }).filter(Boolean).join('');
     
     cartTotalDiv.innerHTML = `<div class="total">Итого: ${total} ₽</div>`;
+    payButton.disabled = false;
+}
+
+// Инициация тестовой оплаты через Stripe
+async function initiatePayment() {
+    const firstName = document.getElementById('firstName')?.value.trim();
+    const lastName = document.getElementById('lastName')?.value.trim();
+    const address = document.getElementById('address')?.value.trim();
     
-    // Показываем кнопку оплаты
-    tg.MainButton.setText(`Оплатить ${total} ₽`);
-    tg.MainButton.show();
-    tg.MainButton.onClick(() => initiatePayment(total));
+    if (!firstName || !lastName || !address) {
+        tg.showAlert('Пожалуйста, заполните все обязательные поля!');
+        return;
+    }
+    
+    if (cart.length === 0) {
+        tg.showAlert('Корзина пуста!');
+        return;
+    }
+
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    // Симуляция создания Payment Intent (в реальном приложении это делается на сервере)
+    const paymentIntent = {
+        client_secret: 'pi_test_' + Date.now() // Мок для теста
+    };
+
+    try {
+        const result = await stripe.confirmCardPayment(paymentIntent.client_secret, {
+            payment_method: {
+                card: cardElement,
+                billing_details: {
+                    name: `${firstName} ${lastName}`,
+                    address: {
+                        line1: address
+                    }
+                }
+            }
+        });
+
+        if (result.error) {
+            tg.showAlert(`Ошибка оплаты: ${result.error.message}`);
+        } else if (result.paymentIntent.status === 'succeeded') {
+            submitOrder();
+            tg.showAlert('✅ Тестовая оплата прошла успешно!');
+        }
+    } catch (error) {
+        tg.showAlert('Ошибка при обработке оплаты. Попробуйте снова.');
+        console.error('Payment error:', error);
+    }
 }
 
 // Загрузка данных в форму доставки
@@ -116,40 +187,12 @@ function loadDeliveryForm() {
     }
 }
 
-// Инициация тестовой оплаты
-function initiatePayment(total) {
-    const payload = JSON.stringify({
-        orderId: Date.now(),
-        amount: total,
-        currency: 'RUB',
-        description: 'Оплата заказа в Доставке еды'
-    });
-
-    // Симуляция запроса на оплату (без реального провайдера)
-    tg.showConfirm(`Тестовая оплата на сумму ${total} ₽. Подтвердить?`, (confirmed) => {
-        if (confirmed) {
-            submitOrder();
-            tg.showAlert('✅ Тестовая оплата прошла успешно!');
-        }
-    });
-}
-
 // Оформление заказа
 function submitOrder() {
     const firstName = document.getElementById('firstName')?.value.trim();
     const lastName = document.getElementById('lastName')?.value.trim();
     const address = document.getElementById('address')?.value.trim();
     const comment = document.getElementById('comment')?.value.trim();
-    
-    if (!firstName || !lastName || !address) {
-        tg.showAlert('Пожалуйста, заполните все обязательные поля!');
-        return;
-    }
-    
-    if (cart.length === 0) {
-        tg.showAlert('Корзина пуста!');
-        return;
-    }
     
     const order = {
         id: Date.now(),
@@ -181,8 +224,6 @@ function submitOrder() {
     updateCartCount();
     displayCart();
     
-    tg.MainButton.hide();
-    tg.showAlert('✅ Заказ отправлен! Ожидайте доставку.');
     window.location.href = 'index.html';
 }
 
@@ -231,7 +272,7 @@ function loadProfileForm() {
 // Сохранение профиля
 function saveProfile() {
     const firstName = document.getElementById('profileFirstName')?.value.trim();
-    const lastName = document.getElementById('profileLastName')?.value.trim();
+    const lastName = document.getTextById('profileLastName')?.value.trim();
     
     if (!firstName || !lastName) {
         tg.showAlert('Пожалуйста, заполните имя и фамилию!');
