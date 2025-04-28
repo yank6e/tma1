@@ -11,7 +11,7 @@ body {
     padding: 20px;
 }
 
-h1 {
+h1, h2 {
     text-align: center;
     color: #333;
 }
@@ -56,10 +56,9 @@ button:hover {
     background: #d35400;
 }
 
-.cart-button {
+.cart-button, .history-button, .back-button {
     position: fixed;
     bottom: 20px;
-    right: 20px;
     background: #2ecc71;
     color: white;
     padding: 10px 20px;
@@ -71,6 +70,71 @@ button:hover {
     gap: 5px;
 }
 
-.cart-button:hover {
+.cart-button {
+    right: 20px;
+}
+
+.history-button {
+    right: 150px;
+}
+
+.back-button {
+    left: 20px;
+}
+
+.cart-button:hover, .history-button:hover, .back-button:hover {
     background: #27ae60;
+}
+
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.cart-item button {
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+.total {
+    text-align: right;
+    font-weight: bold;
+    margin: 20px 0;
+}
+
+.delivery-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.delivery-form input, .delivery-form textarea {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.delivery-form textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.order-history {
+    margin-top: 20px;
+}
+
+.order-history-item {
+    background: white;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }

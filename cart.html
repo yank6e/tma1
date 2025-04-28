@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛒 Корзина</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <h1>🛒 Корзина</h1>
+        <div id="cart-items"></div>
+        <div id="cart-total"></div>
+        
+        <h2>Данные для доставки</h2>
+        <div class="delivery-form">
+            <input type="text" id="firstName" placeholder="Имя" required>
+            <input type="text" id="lastName" placeholder="Фамилия" required>
+            <input type="text" id="address" placeholder="Адрес доставки" required>
+            <textarea id="comment" placeholder="Комментарий к заказу"></textarea>
+            <button onclick="submitOrder()">Оформить заказ</button>
+        </div>
+        
+        <div class="back-button" onclick="window.location.href='index.html'">
+            ← Назад к меню
+        </div>
+    </div>
+</body>
+</html>

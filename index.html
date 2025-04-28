@@ -39,11 +39,41 @@
                 <p class="price">400 ₽</p>
                 <button onclick="addToCart(3, 'Суши', 400)">В корзину</button>
             </div>
+
+            <!-- Салат -->
+            <div class="food-item">
+                <img src="https://via.placeholder.com/150" alt="Салат">
+                <h3>Цезарь</h3>
+                <p>Курица, романо, пармезан</p>
+                <p class="price">300 ₽</p>
+                <button onclick="addToCart(4, 'Цезарь', 300)">В корзину</button>
+            </div>
+
+            <!-- Паста -->
+            <div class="food-item">
+                <img src="https://via.placeholder.com/150" alt="Паста">
+                <h3>Паста Карбонара</h3>
+                <p>Бекон, сливки, сыр</p>
+                <p class="price">320 ₽</p>
+                <button onclick="addToCart(5, 'Паста Карбонара', 320)">В корзину</button>
+            </div>
+
+            <!-- Напиток -->
+            <div class="food-item">
+                <img src="https://via.placeholder.com/150" alt="Напиток">
+                <h3>Кола</h3>
+                <p>Освежающий напиток 0.5л</p>
+                <p class="price">100 ₽</p>
+                <button onclick="addToCart(6, 'Кола', 100)">В корзину</button>
+            </div>
         </div>
         
-        <!-- Кнопка корзины -->
-        <div class="cart-button" onclick="openCart()">
+        <!-- Кнопки -->
+        <div class="cart-button" onclick="window.location.href='cart.html'">
             🛒 Корзина (<span id="cart-count">0</span>)
+        </div>
+        <div class="history-button" onclick="showOrderHistory()">
+            📜 История заказов
         </div>
     </div>
 </body>
