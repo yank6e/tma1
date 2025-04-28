@@ -5,14 +5,39 @@ const tg = window.Telegram.WebApp;
 const userId = tg.initDataUnsafe?.user?.id || 'guest';
 
 // Инициализация Stripe с предоставленным тестовым публичным ключом
-const stripe = Stripe('pk_test_51RItahIO2PGRyYd42idSYTYMxXK1gwBQrVqXpEEiZO2OyURzv2KvnxGz4WUuTloizejwpoSBqIfOKOS4GsVMdzRe009MlVeuRa');
-const elements = stripe.elements();
-let cardElement;
+let stripe, elements, cardElement;
+try {
+    stripe = Stripe('pk_test_51RItahIO2PGRyYd42idSYTYMxXK1gwBQrVqXpEEiZO2OyURzv2KvnxGz4WUuTloizejwpoSBqIfOKOS4GsVMdzRe009MlVeuRa');
+    elements = stripe.elements();
+} catch (error) {
+    console.error('Stripe initialization failed:', error);
+}
 
-// Загрузка данных из LocalStorage
-let cart = JSON.parse(localStorage.getItem(`cart_${userId}`)) || [];
-let orderHistory = JSON.parse(localStorage.getItem(`orderHistory_${userId}`)) || [];
-let profile = JSON.parse(localStorage.getItem(`profile_${userId}`)) || { firstName: '', lastName: '' };
+// Загрузка данных из LocalStorage с обработкой ошибок
+let cart = [];
+let orderHistory = [];
+let profile = { firstName: '', lastName: '' };
+
+try {
+    const cartData = localStorage.getItem(`cart_${userId}`);
+    cart = cartData ? JSON.parse(cartData) : [];
+} catch (error) {
+    console.error('Failed to parse cart from LocalStorage:', error);
+}
+
+try {
+    const historyData = localStorage.getItem(`orderHistory_${userId}`);
+    orderHistory = historyData ? JSON.parse(historyData) : [];
+} catch (error) {
+    console.error('Failed to parse order history from LocalStorage:', error);
+}
+
+try {
+    const profileData = localStorage.getItem(`profile_${userId}`);
+    profile = profileData ? JSON.parse(profileData) : { firstName: '', lastName: '' };
+} catch (error) {
+    console.error('Failed to parse profile from LocalStorage:', error);
+}
 
 // Обновляем счетчик корзины и инициализируем страницы
 updateCartCount();
@@ -28,59 +53,78 @@ if (window.location.pathname.includes('cart.html')) {
 
 // Настройка Stripe Card Element
 function setupStripe() {
-    cardElement = elements.create('card');
-    cardElement.mount('#card-element');
-    
-    cardElement.on('change', (event) => {
-        const displayError = document.getElementById('card-errors');
-        if (event.error) {
-            displayError.textContent = event.error.message;
-        } else {
-            displayError.textContent = '';
-        }
-    });
+    try {
+        cardElement = elements.create('card');
+        cardElement.mount('#card-element');
+        
+        cardElement.on('change', (event) => {
+            const displayError = document.getElementById('card-errors');
+            if (event.error) {
+                displayError.textContent = event.error.message;
+            } else {
+                displayError.textContent = '';
+            }
+        });
 
-    const payButton = document.getElementById('pay-button');
-    if (payButton) {
-        payButton.addEventListener('click', initiatePayment);
+        const payButton = document.getElementById('pay-button');
+        if (payButton) {
+            payButton.addEventListener('click', initiatePayment);
+        }
+    } catch (error) {
+        console.error('Stripe setup failed:', error);
     }
 }
 
 // Добавление товара в корзину
 function addToCart(id, name, price) {
-    const existingItem = cart.find(item => item.id === id);
-    
-    if (existingItem) {
-        existingItem.quantity += 1;
-    } else {
-        cart.push({ id, name, price, quantity: 1 });
+    try {
+        console.log('Adding to cart:', { id, name, price });
+        const existingItem = cart.find(item => item.id === id);
+        
+        if (existingItem) {
+            existingItem.quantity += 1;
+        } else {
+            cart.push({ id, name, price, quantity: 1 });
+        }
+        
+        localStorage.setItem(`cart_${userId}`, JSON.stringify(cart));
+        console.log('Cart updated:', cart);
+        updateCartCount();
+        tg.showAlert(`Добавлено: ${name}`);
+    } catch (error) {
+        console.error('Error in addToCart:', error);
+        tg.showAlert('Ошибка при добавлении в корзину. Попробуйте снова.');
     }
-    
-    localStorage.setItem(`cart_${userId}`, JSON.stringify(cart));
-    updateCartCount();
-    tg.showAlert(`Добавлено: ${name}`);
 }
 
 // Удаление товара из корзины
 function removeFromCart(id) {
-    cart = cart.filter(item => item.id !== id);
-    localStorage.setItem(`cart_${userId}`, JSON.stringify(cart));
-    updateCartCount();
-    displayCart();
+    try {
+        cart = cart.filter(item => item.id !== id);
+        localStorage.setItem(`cart_${userId}`, JSON.stringify(cart));
+        updateCartCount();
+        displayCart();
+    } catch (error) {
+        console.error('Error in removeFromCart:', error);
+    }
 }
 
 // Изменение количества товара
 function updateQuantity(id, change) {
-    const item = cart.find(item => item.id === id);
-    if (item) {
-        item.quantity += change;
-        if (item.quantity <= 0) {
-            removeFromCart(id);
-        } else {
-            localStorage.setItem(`cart_${userId}`, JSON.stringify(cart));
-            updateCartCount();
-            displayCart();
+    try {
+        const item = cart.find(item => item.id === id);
+        if (item) {
+            item.quantity += change;
+            if (item.quantity <= 0) {
+                removeFromCart(id);
+            } else {
+                localStorage.setItem(`cart_${userId}`, JSON.stringify(cart));
+                updateCartCount();
+                displayCart();
+            }
         }
+    } catch (error) {
+        console.error('Error in updateQuantity:', error);
     }
 }
 
@@ -144,32 +188,10 @@ async function initiatePayment() {
         return;
     }
 
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-    // Симуляция создания Payment Intent (в реальном приложении это делается на сервере)
-    const paymentIntent = {
-        client_secret: 'pi_test_' + Date.now() // Мок для теста
-    };
-
+    // Симуляция успешной оплаты для тестирования без сервера
     try {
-        const result = await stripe.confirmCardPayment(paymentIntent.client_secret, {
-            payment_method: {
-                card: cardElement,
-                billing_details: {
-                    name: `${firstName} ${lastName}`,
-                    address: {
-                        line1: address
-                    }
-                }
-            }
-        });
-
-        if (result.error) {
-            tg.showAlert(`Ошибка оплаты: ${result.error.message}`);
-        } else if (result.paymentIntent.status === 'succeeded') {
-            submitOrder();
-            tg.showAlert('✅ Тестовая оплата прошла успешно!');
-        }
+        submitOrder();
+        tg.showAlert('✅ Тестовая оплата прошла успешно!');
     } catch (error) {
         tg.showAlert('Ошибка при обработке оплаты. Попробуйте снова.');
         console.error('Payment error:', error);
@@ -272,11 +294,11 @@ function loadProfileForm() {
 // Сохранение профиля
 function saveProfile() {
     const firstName = document.getElementById('profileFirstName')?.value.trim();
-    const lastName = document.getTextById('profileLastName')?.value.trim();
+    const lastName = document.getElementById('profileLastName')?.value.trim();
     
     if (!firstName || !lastName) {
         tg.showAlert('Пожалуйста, заполните имя и фамилию!');
-        return;
+        returnHollywood;
     }
     
     profile.firstName = firstName;
@@ -288,9 +310,13 @@ function saveProfile() {
 
 // Обновление счетчика корзины
 function updateCartCount() {
-    const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
-    const cartCounts = document.querySelectorAll('#cart-count');
-    cartCounts.forEach(cartCount => {
-        if (cartCount) cartCount.textContent = totalItems;
-    });
+    try {
+        const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 0), 0);
+        const cartCounts = document.querySelectorAll('#cart-count');
+        cartCounts.forEach(cartCount => {
+            if (cartCount) cartCount.textContent = totalItems;
+        });
+    } catch (error) {
+        console.error('Error in updateCartCount:', error);
+    }
 }
